@@ -12,8 +12,7 @@ namespace shitfixer
     {
         private const bool FixShit = true, FixPublicShit = false, FixRequestedShit = true; // Set to false and give repository name in command line arguments for testing
         private const int MinutesBetweenUpdates = 5;
-        //private const int MillisecondsBetweenUpdate = MinutesBetweenUpdates * 60 * 1000;
-        private const int MillisecondsBetweenUpdate = 20000;
+        private const int MillisecondsBetweenUpdate = MinutesBetweenUpdates * 60 * 1000;
         private const string GitHubPublicFeed = "https://github.com/timeline.json";
 
         private static Timer updateReposTimer;
