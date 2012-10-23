@@ -75,14 +75,13 @@ namespace shitfixer
                         originOwner + ":master", "Fixed your shit", string.Format(PullRequestMessage, summary));
 
                     Console.WriteLine("Finished cleaning " + repositoryName);
-                    Directory.Delete(cloneDir, true);
-
                     Program.RepositoriesToDelete.Add(new RepositoryToDelete
                     {
                         PullRequest = requestNumber,
                         Origin = repositoryName,
                         RepositoryName = fork.Name
                     });
+                    Directory.Delete(cloneDir, true);
                 }
                 else
                     Console.WriteLine("No changes to commit.");
@@ -119,6 +118,16 @@ namespace shitfixer
             command.SetURI(url);
             command.SetCloneSubmodules(false);
             return command.Call();
+        }
+
+        private static int CountStart(string s, char c)
+        {
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] != c)
+                    return i;
+            }
+            return s.Length;
         }
 
         public static string ReformatRepository(string cloneDir, string repositoryName)
@@ -159,7 +168,7 @@ namespace shitfixer
             }
             Console.WriteLine("Applying changes to " + repositoryName);
             string text;
-            string spaces = "    ";
+            string spacesString = "    ";
             foreach (var file in files)
             {
                 StreamReader reader = new StreamReader(file);
@@ -179,7 +188,7 @@ namespace shitfixer
                 if (!(tabCount == 0 || spaceCount == 0)) // Fix indentation
                 {
                     if (tabCount < spaceCount) // Tabs to spaces
-                        text = text.Replace("\t", spaces);
+                        text = text.Replace("\t", spacesString);
                     else // Spaces to tabs
                         text = SpacesToTabs(text, lfCount < crlfCount);
                 }
