@@ -28,7 +28,8 @@ namespace shitfixer
         private const string PullRequestMessage = "I am a bot that determines the most common formatting styles your project " +
             "uses and standardizes it throughout your entire project.\n\n**Change Summary**\n\n{0}\n" +
             "[My Source Code](https://github.com/FixYourShit/shitfixer) - [More Information](https://github.com/FixYourShit/shitfixer/blob/master/README.md) - [My Author](https://github.com/SirCmpwn)\n\n" +
-            "If I did something wrong, or you want more features, pull requests on my own code are welcome.";
+            "If I did something wrong, or you want more features, pull requests on my own code are welcome.\n\n" +
+            "**This is an automated tool. Please double-check that everything still works before merging.**";
 
         // Fixes shit async
         public static void FixShit(string repositoryName)

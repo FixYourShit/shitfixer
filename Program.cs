@@ -10,7 +10,7 @@ namespace shitfixer
 {
     class Program
     {
-        private const bool FixShit = false; // Set to false and give repository name in command line arguments for testing
+        private const bool FixShit = true, FixPublicShit = false, FixRequestedShit = true; // Set to false and give repository name in command line arguments for testing
         private const int MinutesBetweenUpdates = 15;
         private const int MillisecondsBetweenUpdate = MinutesBetweenUpdates * 60 * 1000;
         private const string GitHubPublicFeed = "https://github.com/timeline.json";
@@ -25,6 +25,7 @@ namespace shitfixer
             if (FixShit)
             {
                 webClient = new WebClient();
+                UpdateRepos();
                 updateReposTimer = new Timer(o => UpdateRepos(), null,
                                              MillisecondsBetweenUpdate, MillisecondsBetweenUpdate);
             }
@@ -43,11 +44,42 @@ namespace shitfixer
         // TODO: Avoid fixing the same repos several times
         private static void UpdateRepos()
         {
-            Console.WriteLine("Fetching public timeline and updating repositories...");
             try
             {
-                var rawFeed = webClient.DownloadString(GitHubPublicFeed); // TODO: Async?
-                var feed = JObject.Parse(rawFeed);
+                if (FixRequestedShit) // Requested shit takes a higher priority
+                {
+                    Console.WriteLine("Checking fix requests...");
+                    var issues = GitHub.GetActiveIssues("FixYourShit/shitfixer").Where(i => i.Title.StartsWith("Fix "));
+                    if (issues.Count() != 0)
+                    {
+                        var issue = issues.First();
+                        string repository = issue.Title.Substring(4).Trim();
+                        bool valid = false;
+                        try
+                        {
+                            // Validate repository
+                            webClient.DownloadString("https://github.com/" + repository);
+                            valid = true;
+                        }
+                        catch
+                        {
+                            GitHub.CommentOnIssue(issue.IssueNumber, "FixYourShit/shitfixer", "That repository is either private or does not exist.");
+                            GitHub.CloseIssue(issue.IssueNumber, "FixYourShit/shitfixer");
+                        }
+                        if (valid)
+                        {
+                            GitHub.CommentOnIssue(issue.IssueNumber, "FixYourShit/shitfixer", "Working on it.");
+                            GitHub.CloseIssue(issue.IssueNumber, "FixYourShit/shitfixer");
+                            ShitFixer.FixShit(repository);
+                        }
+                    }
+                }
+                if (FixPublicShit)
+                {
+                    Console.WriteLine("Looking for public repositories to fix...");
+                    var rawFeed = webClient.DownloadString(GitHubPublicFeed); // TODO: Async?
+                    var feed = JObject.Parse(rawFeed);
+                }
             }
             catch { }
         }
