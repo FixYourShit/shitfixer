@@ -19,6 +19,8 @@ namespace shitfixer
         private const string ListIssuesUrl = "https://api.github.com/repos/{0}/issues";
         private const string IssueCommentUrl = "https://api.github.com/repos/{0}/issues/{1}/comments";
         private const string EditIssueUrl = "https://api.github.com/repos/{0}/issues/{1}";
+        private const string GetPullRequestUrl = "https://api.github.com/repos/{0}/pulls/{1}";
+        private const string DeleteRepositoryUrl = "https://api.github.com/repos/{0}";
 
         private static string AuthString;
         internal static string Username, Password;
@@ -69,7 +71,7 @@ namespace shitfixer
             return results;
         }
 
-        public static void PullRequest(string targetRepository, string myBranch, string theirBranch, string title, string body)
+        public static int PullRequest(string targetRepository, string myBranch, string theirBranch, string title, string body)
         {
             var request = CreatePost(string.Format(PullRequestUrl, targetRepository));
             JObject json = new JObject();
@@ -81,7 +83,9 @@ namespace shitfixer
             WriteString(json.ToString(), stream);
             stream.Close();
             var response = request.GetResponse();
-            response.Close(); // Discard
+            var jsonResult = GetJson(response.GetResponseStream());
+            response.Close();
+            return jsonResult["number"].Value<int>();
         }
 
         public static List<Issue> GetActiveIssues(string repository)
@@ -129,6 +133,23 @@ namespace shitfixer
             stream.Close();
             var response = request.GetResponse();
             response.Close(); // Discard
+        }
+
+        public static string GetPullRequestStatus(int requestNumber, string repository)
+        {
+            var request = CreateGet(string.Format(GetPullRequestUrl, repository, requestNumber));
+            var response = request.GetResponse();
+            var json = GetJson(response.GetResponseStream());
+            response.Close();
+            return json["state"].Value<string>();
+        }
+
+        public static void DeleteRepository(string repository)
+        {
+            var request = CreateGet(string.Format(DeleteRepositoryUrl, repository));
+            request.Method = "DELETE";
+            var response = request.GetResponse();
+            response.Close();
         }
 
         private static WebRequest CreateGet(string url)

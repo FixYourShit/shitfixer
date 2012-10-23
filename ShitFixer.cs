@@ -15,6 +15,7 @@ namespace shitfixer
     public static class ShitFixer
     {
         private const string CloneUrl = "git://github.com/{0}.git";
+        public static bool Busy = false;
 
         private static string[] ValidExtensions = new []
             {
@@ -29,7 +30,8 @@ namespace shitfixer
             "uses and standardizes it throughout your entire project.\n\n**Change Summary**\n\n{0}\n" +
             "[My Source Code](https://github.com/FixYourShit/shitfixer) - [More Information](https://github.com/FixYourShit/shitfixer/blob/master/README.md) - [My Author](https://github.com/SirCmpwn)\n\n" +
             "If I did something wrong, or you want more features, pull requests on my own code are welcome.\n\n" +
-            "**This is an automated tool. Please double-check that everything still works before merging.**";
+            "**This is an automated tool. Please double-check that everything still works before merging.**\n\n" +
+            "**This bot is in beta, please check that the changes are correct and [create an issue](https://github.com/FixYourShit/shitfixer/issues/new) if they are not.**";
 
         // Fixes shit async
         public static void FixShit(string repositoryName)
@@ -39,40 +41,56 @@ namespace shitfixer
 
         private static void FixShitAsync(object _repositoryName)
         {
-            var repositoryName = _repositoryName as string;
-            Console.WriteLine("Cloning " + repositoryName + "...");
-            var cloneDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString().Replace("-", ""));
-
-            var repository = CloneRepository(string.Format(CloneUrl, repositoryName), cloneDir);
-
-            var summary = ReformatRepository(cloneDir, repositoryName);
-
-            var status = GetStatus(repository);
-            var modified = status.GetModified();
-            if (modified.Count != 0)
+            Busy = true;
+            try
             {
-                Console.WriteLine("Committing changes...");
-                DoCommit(repository, "Fixed formatting issues", summary);
-                Console.WriteLine("Forking repository...");
-                dynamic fork = GitHub.Fork(repositoryName);
+                var repositoryName = _repositoryName as string;
+                Console.WriteLine("Cloning " + repositoryName + "...");
+                var cloneDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString().Replace("-", ""));
 
-                Console.WriteLine("Pushing to origin...");
-                var push = repository.Push();
-                push.SetCredentialsProvider(new UsernamePasswordCredentialsProvider(GitHub.Username, GitHub.Password));
-                push.SetRemote(fork.Remote);
-                push.SetRefSpecs(new RefSpec("refs/heads/master:refs/heads/master"));
-                push.Call();
+                var repository = CloneRepository(string.Format(CloneUrl, repositoryName), cloneDir);
 
-                // Create pull request
-                Console.WriteLine("Sending pull request..."); // TODO: Use the default branch on the repo
-                var originOwner = repositoryName.Remove(repositoryName.IndexOf('/'));
-                GitHub.PullRequest(repositoryName, "FixYourShit:master", originOwner + ":master", "Fixed your shit", string.Format(PullRequestMessage, summary));
+                var summary = ReformatRepository(cloneDir, repositoryName);
 
-                Console.WriteLine("Finished cleaning " + repositoryName);
-                Directory.Delete(cloneDir, true);
+                var status = GetStatus(repository);
+                var modified = status.GetModified();
+                if (modified.Count != 0)
+                {
+                    Console.WriteLine("Committing changes...");
+                    DoCommit(repository, "Fixed formatting issues", summary);
+                    Console.WriteLine("Forking repository...");
+                    dynamic fork = GitHub.Fork(repositoryName);
+
+                    Console.WriteLine("Pushing to origin...");
+                    var push = repository.Push();
+                    push.SetCredentialsProvider(new UsernamePasswordCredentialsProvider(GitHub.Username, GitHub.Password));
+                    push.SetRemote(fork.Remote);
+                    push.SetRefSpecs(new RefSpec("refs/heads/master:refs/heads/master"));
+                    push.Call();
+
+                    // Create pull request
+                    Console.WriteLine("Sending pull request..."); // TODO: Use the default branch on the repo
+                    var originOwner = repositoryName.Remove(repositoryName.IndexOf('/'));
+                    int requestNumber = GitHub.PullRequest(repositoryName, "FixYourShit:master",
+                        originOwner + ":master", "Fixed your shit", string.Format(PullRequestMessage, summary));
+
+                    Console.WriteLine("Finished cleaning " + repositoryName);
+                    Directory.Delete(cloneDir, true);
+
+                    Program.RepositoriesToDelete.Add(new RepositoryToDelete
+                    {
+                        PullRequest = requestNumber,
+                        Origin = repositoryName,
+                        RepositoryName = fork.Name
+                    });
+                }
+                else
+                    Console.WriteLine("No changes to commit.");
             }
-            else
-                Console.WriteLine("No changes to commit.");
+            finally
+            {
+                Busy = false;
+            }
         }
 
         private static void DoCommit(Git repository, string message, string summary)
@@ -93,11 +111,13 @@ namespace shitfixer
 
         private static Git CloneRepository(string url, string destination)
         {
+            // TODO: Shallow clone
             var command = Git.CloneRepository();
             if (!Directory.Exists(destination))
                 Directory.CreateDirectory(destination);
             command.SetDirectory(new FilePath(destination));
             command.SetURI(url);
+            command.SetCloneSubmodules(false);
             return command.Call();
         }
 
@@ -142,8 +162,10 @@ namespace shitfixer
             string spaces = "    ";
             foreach (var file in files)
             {
-                text = File.ReadAllText(file);
-                var writer = new StreamWriter(file, false);
+                StreamReader reader = new StreamReader(file);
+                Encoding encoding = reader.CurrentEncoding;
+                text = reader.ReadToEnd();
+                reader.Close();
                 if (!(crlfCount == 0 || lfCount == 0)) // Fix line breaks
                 {
                     if (crlfCount < lfCount) // CRLF to LF
@@ -161,7 +183,9 @@ namespace shitfixer
                     else // Spaces to tabs
                         text = SpacesToTabs(text, lfCount < crlfCount);
                 }
-                writer.Write(text);
+                var writer = File.Create(file);
+                var payload = encoding.GetBytes(text);
+                writer.Write(payload, 0, payload.Length);
                 writer.Flush();
                 writer.Close();
             }

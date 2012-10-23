@@ -58,6 +58,7 @@
     <Compile Include="Issue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RepositoryToDelete.cs" />
     <Compile Include="ShitFixer.cs" />
   </ItemGroup>
   <ItemGroup>
