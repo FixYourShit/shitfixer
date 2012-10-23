@@ -86,6 +86,10 @@ namespace shitfixer
                 else
                     Console.WriteLine("No changes to commit.");
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
             finally
             {
                 Busy = false;
