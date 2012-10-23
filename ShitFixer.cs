@@ -9,6 +9,7 @@ using NGit;
 using NGit.Api;
 using Sharpen;
 using NGit.Transport;
+using System.Threading;
 
 namespace shitfixer
 {
@@ -69,10 +70,33 @@ namespace shitfixer
                     push.Call();
 
                     // Create pull request
-                    Console.WriteLine("Sending pull request..."); // TODO: Use the default branch on the repo
-                    var originOwner = repositoryName.Remove(repositoryName.IndexOf('/'));
-                    int requestNumber = GitHub.PullRequest(repositoryName, "FixYourShit:master",
-                        originOwner + ":master", "Fixed your shit", string.Format(PullRequestMessage, summary));
+                    int requestNumber = -1;
+                    int i;
+                    for (i = 0; i < 10; i++)
+                    {
+                        try
+                        {
+                            Console.WriteLine("Sending pull request..."); // TODO: Use the default branch on the repo
+                            var originOwner = repositoryName.Remove(repositoryName.IndexOf('/'));
+                            requestNumber = GitHub.PullRequest(repositoryName, "FixYourShit:master",
+                                originOwner + ":master", "Fixed your shit", string.Format(PullRequestMessage, summary));
+                            break;
+                        }
+                        catch
+                        {
+                            Thread.Sleep(5000); // Most of the errors creating a pull request are from GitHub lagging beind
+                        }
+                    }
+                    if (i == 10)
+                    {
+                        Program.RepositoriesToDelete.Add(new RepositoryToDelete
+                        {
+                            PullRequest = requestNumber,
+                            Origin = repositoryName,
+                            RepositoryName = fork.Name
+                        });
+                        throw new Exception("Unable to create pull request.");
+                    }
 
                     Console.WriteLine("Finished cleaning " + repositoryName);
                     Program.RepositoriesToDelete.Add(new RepositoryToDelete

@@ -73,19 +73,28 @@ namespace shitfixer
 
         public static int PullRequest(string targetRepository, string myBranch, string theirBranch, string title, string body)
         {
-            var request = CreatePost(string.Format(PullRequestUrl, targetRepository));
-            JObject json = new JObject();
-            json.Add("base", theirBranch);
-            json.Add("head", myBranch);
-            json.Add("body", body);
-            json.Add("title", title);
-            var stream = request.GetRequestStream();
-            WriteString(json.ToString(), stream);
-            stream.Close();
-            var response = request.GetResponse();
-            var jsonResult = GetJson(response.GetResponseStream());
-            response.Close();
-            return jsonResult["number"].Value<int>();
+            try
+            {
+                var request = CreatePost(string.Format(PullRequestUrl, targetRepository));
+                JObject json = json = new JObject();
+                json.Add("base", theirBranch);
+                json.Add("head", myBranch);
+                json.Add("body", body);
+                json.Add("title", title);
+                var stream = request.GetRequestStream();
+                WriteString(json.ToString(), stream);
+                stream.Close();
+                var response = request.GetResponse();
+                var jsonResult = GetJson(response.GetResponseStream());
+                response.Close();
+                return jsonResult["number"].Value<int>();
+            }
+            catch (WebException e)
+            {
+                var jsonResult = GetJson(e.Response.GetResponseStream());
+                e.Response.Close();
+                throw;
+            }
         }
 
         public static List<Issue> GetActiveIssues(string repository)
