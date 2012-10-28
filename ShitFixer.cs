@@ -311,6 +311,8 @@ namespace shitfixer
                 else // Spaces to tabs
                     summary += "* Converted spaces to tabs\n";
             }
+            if (trailing) 
+            	summary += "* Fixed trailing whitespaces\n";
             return summary;
         }
 
