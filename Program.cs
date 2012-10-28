@@ -71,6 +71,18 @@ namespace shitfixer
                     {
                         var issue = issues.First();
                         string repository = issue.Title.Substring(4).Trim();
+                        string user = repository.Remove(repository.IndexOf('/'));
+                        string repo = repository.Substring(repository.IndexOf('/') + 1);
+                        var existingRepos = GitHub.GetRepositories();
+                        foreach (var item in existingRepos)
+                        {
+                            if (item.Substring(item.IndexOf('/') + 1).ToLower() == repo.ToLower())
+                            {
+                                GitHub.CommentOnIssue(issue.IssueNumber, "FixYourShit/shitfixer", "I already have a pending job by that name. Try again later.");
+                                GitHub.CloseIssue(issue.IssueNumber, "FixYourShit/shitfixer");
+                                return;
+                            }
+                        }
                         bool valid = false;
                         try
                         {
@@ -85,8 +97,8 @@ namespace shitfixer
                         }
                         if (valid)
                         {
-                            if (repository.Remove(repository.IndexOf('/')).ToLower() == "fixyourshit" ||
-                                repository.Substring(repository.IndexOf('/') + 1).ToLower() == "shitfixer")
+                            if (user.ToLower() == "fixyourshit" ||
+                                repo.ToLower() == "shitfixer")
                             {
                                 GitHub.CommentOnIssue(issue.IssueNumber, "FixYourShit/shitfixer", "Haha, very funny.");
                                 GitHub.CloseIssue(issue.IssueNumber, "FixYourShit/shitfixer");
