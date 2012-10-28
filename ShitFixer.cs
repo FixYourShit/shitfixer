@@ -188,16 +188,18 @@ namespace shitfixer
         /// </summary>
         /// <param name="text">The file contents</param>
         /// <param name="LF">Weather to check using LF or CRLF</param>
+        /// <para name="end">Weather to check the start or end of the file</para>
         /// <returns></returns>
-        public static int TrailingCutOff(string text, bool LF) {
-            int i = text.Length - 3;
-            for (; i > 0; --i) {
+        public static int TrailingCutOff(string text, bool LF, bool end) {
+        	int i = (end ? text.Length - 3 : 0);
+        	int addi = (end ? -1 : 1);
+        	for (; (i > 0 && end) || (i < text.Length && !end); i += addi) {
                 if (text[i] != '\n' && text[i] != '\r' && !LF)
                     break;
                 else if (text[i] != '\n' && LF)
                     break;
             }
-            return i + (LF ? 1 : 2);
+        	return (end ? i + (LF ? 1 : 2) : i);
         }
         
         /// <summary>
@@ -212,11 +214,16 @@ namespace shitfixer
             bool LF = iLF > iCRLF;
             if (!HasTrailingWhiteSpace(text, LF))
                 return text;
-            int size = TrailingCutOff(text, LF) + 1;
-            char[] newlines = new char[size];
-            Array.Copy(text.ToCharArray(), newlines, size);
-            string newtext = new string(newlines);
-            newlines = null;
+            int start = -1;
+            string newtext = text;
+            while (start != 0) {
+                int size = TrailingCutOff(newtext, LF, true) + 1;
+                start = TrailingCutOff(newtext, LF, false);
+                char[] newlines = new char[size];
+                Array.Copy(newtext.ToCharArray(), start, newlines, 0, size);
+                newtext = new string(newlines);
+                newlines = null;
+            }
             return newtext;
         }
         #endregion
