@@ -160,12 +160,13 @@ namespace shitfixer
         
         #region Whitespace check
         /// <summary>
-        /// Check to see if a file has trailing whitespaces
+        /// Check to see if a file has trailing whitespace.
         /// </summary>
-        /// <param name="file">The file contents</param>
-        /// <param name="LF">Weather to check using LF or CRLF</param>
-        /// <returns>True if the file has trailing whitespaces</returns>
-        public static bool HasTrailingWhiteSpace(string lines, bool LF) {
+        /// <param name="file">The file contents.</param>
+        /// <param name="LF">Weather to check using LF or CRLF.</param>
+        /// <returns>True if the file has trailing whitespace.</returns>
+        public static bool HasTrailingWhiteSpace(string lines, bool LF) 
+        {
             return ((LF && lines[lines.Length - 3] == '\n') || (!LF && lines[lines.Length - 3] == '\n' && lines[lines.Length - 4] == '\r'));
         }
         
@@ -173,9 +174,10 @@ namespace shitfixer
         /// Check to see if a file has trailing whitespaces.
         /// This method will detect which line ending to use.
         /// </summary>
-        /// <param name="file">The file to check</param>
-        /// <returns>True if the file has trailing whitespaces</returns>
-        public static bool HasTrailingWhiteSpace(string file) {
+        /// <param name="file">The file to check.</param>
+        /// <returns>True if the file has trailing whitespace.</returns>
+        public static bool HasTrailingWhiteSpace(string file) 
+        {
             string text = File.ReadAllText(file);
             int iLF = text.Count(c => c == '\n');
             int iCRLF = text.Count(c => c == '\n');
@@ -184,16 +186,18 @@ namespace shitfixer
         }
         
         /// <summary>
-        /// Get the pos to cutoff when fixing trailing whitespaces
+        /// Get the pos to cutoff when fixing trailing whitespace.
         /// </summary>
-        /// <param name="text">The file contents</param>
-        /// <param name="LF">Weather to check using LF or CRLF</param>
-        /// <para name="end">Weather to check the start or end of the file</para>
+        /// <param name="text">The file contents.</param>
+        /// <param name="LF">Weather to check using LF or CRLF.</param>
+        /// <para name="end">Weather to check the start or end of the file.</para>
         /// <returns></returns>
-        public static int TrailingCutOff(string text, bool LF, bool end) {
+        public static int TrailingCutOff(string text, bool LF, bool end) 
+        {
         	int i = (end ? text.Length - 3 : 0);
         	int addi = (end ? -1 : 1);
-        	for (; (i > 0 && end) || (i < text.Length && !end); i += addi) {
+        	for (; (i > 0 && end) || (i < text.Length && !end); i += addi) 
+        	{
                 if (text[i] != '\n' && text[i] != '\r' && !LF)
                     break;
                 else if (text[i] != '\n' && LF)
@@ -203,12 +207,13 @@ namespace shitfixer
         }
         
         /// <summary>
-        /// Fix trailing whitespaces in a file and return the result.
+        /// Fix trailing whitespace in a file and return the result.
         /// This method will detect which line ending to use.
         /// </summary>
-        /// <param name="text">The file content to fix</param>
-        /// <returns>The fixed file contents</returns>
-        public static string FixTrailingWhiteSpace(string text) {
+        /// <param name="text">The file content to fix.</param>
+        /// <returns>The fixed file contents.</returns>
+        public static string FixTrailingWhiteSpace(string text) 
+        {
             int iLF = text.Count(c => c == '\n');
             int iCRLF = text.Count(c => c == '\r');
             bool LF = iLF > iCRLF;
@@ -216,7 +221,8 @@ namespace shitfixer
                 return text;
             int start = -1;
             string newtext = text;
-            while (start != 0) {
+            while (start != 0) 
+            {
                 int size = TrailingCutOff(newtext, LF, true) + 1;
                 start = TrailingCutOff(newtext, LF, false);
                 char[] newlines = new char[size];

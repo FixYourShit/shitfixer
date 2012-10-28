@@ -7,6 +7,7 @@ the following:
 
 * Tabs versus spaces
 * LF versus CRLF
+* Trailing whitespace
 
 If it makes any changes, it'll fork your repository and submit a pull request with the fixed code.
 
