@@ -158,16 +158,30 @@ namespace shitfixer
             return s.Length;
         }
         
+        #region Whitespace check
         /// <summary>
-        /// Check to see if a file has Trailing Whitespace
+        /// Check to see if a file has trailing whitespaces
         /// </summary>
-        /// <param name="file">The file to check</param>
+        /// <param name="file">The file contents</param>
         /// <param name="LF">Weather to check using LF or CRLF</param>
         /// <returns>True if the file has trailing whitespaces</returns>
-        public static bool HasTrailingWhiteSpace(string file, bool LF) {
-			string lines = File.ReadAllText(file);
+        public static bool HasTrailingWhiteSpace(string lines, bool LF) {
 			return ((LF && lines[lines.Length - 3] == '\n') || (!LF && lines[lines.Length - 3] == '\n' && lines[lines.Length - 4] == '\r'));
         }
+        
+        /// <summary>
+        /// Check to see if a file has trailing whitespaces.
+        /// This method will detect which line ending to use.
+        /// </summary>
+        /// <param name="file">The file to check</param>
+        /// <returns>True if the file has trailing whitespaces</returns>
+        public static bool HasTrailingWhiteSpace(string file) {
+			string text = File.ReadAllText(file);
+			int iLF = text.Count(c => c == '\n');
+			int iCRLF = text.Count(c => c == '\n');
+			bool LF = iLF > iCRLF;
+			return HasTrailingWhiteSpace(text, LF);
+		}
 		
         /// <summary>
         /// Get the pos to cutoff when fixing trailing whitespaces
@@ -187,12 +201,17 @@ namespace shitfixer
 		}
 		
         /// <summary>
-        /// Fix trailing whitespaces on a file and return the result
+        /// Fix trailing whitespaces in a file and return the result.
+        /// This method will detect which line ending to use.
         /// </summary>
         /// <param name="text">The file content to fix</param>
-        /// <param name="LF">Weather to fix using LF or CRLF</param>
         /// <returns>The fixed file contents</returns>
-		public static string FixTrailingWhiteSpace(string text, bool LF) {
+		public static string FixTrailingWhiteSpace(string text) {
+			int iLF = text.Count(c => c == '\n');
+			int iCRLF = text.Count(c => c == '\r');
+			bool LF = iLF > iCRLF;
+			if (!HasTrailingWhiteSpace(text, LF))
+				return text;
 			int size = TrailingCutOff(text, LF) + 1;
 			char[] newlines = new char[size];
 			Array.Copy(text.ToCharArray(), newlines, size);
@@ -200,6 +219,7 @@ namespace shitfixer
 			newlines = null;
 			return newtext;
 		}
+        #endregion
 
         public static string ReformatRepository(string cloneDir, string repositoryName)
         {
@@ -211,7 +231,7 @@ namespace shitfixer
             int tabCount = 0, spaceCount = 0;
             int crlfCount = 0, lfCount = 0;
             string contents;
-            bool trailing;
+            bool trailing = false;
             Console.WriteLine("Processing " + repositoryName + "...");
             foreach (var file in files)
             {
@@ -229,7 +249,7 @@ namespace shitfixer
                             spaceCount++;
                     }
                     if (!trailing)
-                    	trailing = HasTrailingWhiteSpace(file, crlfCount < lfCount);
+                    	trailing = HasTrailingWhiteSpace(file);
                 }
                 catch
                 {
@@ -267,7 +287,7 @@ namespace shitfixer
                         text = SpacesToTabs(text, lfCount < crlfCount);
                 }
                 if (trailing) //Fix trailing whitespaces
-                	text = FixTrailingWhiteSpace(text, (crlfCount < lfCount));
+                	text = FixTrailingWhiteSpace(text);
                 var writer = File.Create(file);
                 var payload = encoding.GetBytes(text);
                 writer.Write(payload, 0, payload.Length);
