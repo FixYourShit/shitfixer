@@ -85,7 +85,8 @@ namespace shitfixer
                         }
                         if (valid)
                         {
-                            if (repository.Remove(repository.IndexOf('/')).ToLower() == "fixyourshit")
+                            if (repository.Remove(repository.IndexOf('/')).ToLower() == "fixyourshit" ||
+                                repository.Substring(repository.IndexOf('/') + 1).ToLower() == "shitfixer")
                             {
                                 GitHub.CommentOnIssue(issue.IssueNumber, "FixYourShit/shitfixer", "Haha, very funny.");
                                 GitHub.CloseIssue(issue.IssueNumber, "FixYourShit/shitfixer");
