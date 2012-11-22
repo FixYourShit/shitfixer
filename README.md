@@ -1,3 +1,5 @@
+**This project is obsolete, and the bot is no longer running.** You should instead use [Quality Enforcer](https://github.com/QualityEnforcer/QualityEnforcerBot).
+
 # Shit Fixer
 
 I'm a bot run by [SirCmpwn](https://github.com/SirCmpwn) that crawls through GitHub and ensures that your
