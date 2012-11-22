@@ -288,19 +288,22 @@ namespace shitfixer
                 Encoding encoding = reader.CurrentEncoding;
                 text = reader.ReadToEnd();
                 reader.Close();
-                if (!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) // Fix line breaks
+                if (!options.Contains("don't fix line endings"))
                 {
-                	if (crlfCount < lfCount || options.Contains("use lf")) // CRLF to LF
-                        text = text.Replace("\r\n", "\n");
-                    else // LF to CRLF
-                    {
-                        text = text.Replace("\r\n", "temporary_shit_to_fix")
-                            .Replace("\n", "\r\n").Replace("temporary_shit_to_fix", "\r\n");
-                    }
+                	if (!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) // Fix line breaks
+                	{
+                		if ((crlfCount < lfCount || options.Contains("use lf")) && !options.Contains("use crlf")) // CRLF to LF
+                			text = text.Replace("\r\n", "\n");
+                		else // LF to CRLF
+                		{
+                			text = text.Replace("\r\n", "temporary_shit_to_fix")
+                				.Replace("\n", "\r\n").Replace("temporary_shit_to_fix", "\r\n");
+                		}
+                	}
                 }
                 if (!(tabCount == 0 || spaceCount == 0) || options.Contains("use spaces") || options.Contains("use tabs")) // Fix indentation
                 {
-                	if (tabCount < spaceCount || options.Contains("use spaces")) // Tabs to spaces
+                	if ((tabCount < spaceCount || options.Contains("use spaces")) && !options.Contains("use tabs")) // Tabs to spaces
                         text = text.Replace("\t", spacesString);
                     else // Spaces to tabs
                         text = SpacesToTabs(text, lfCount < crlfCount);
@@ -316,21 +319,21 @@ namespace shitfixer
 
             // Create summary
             string summary = "";
-            if (!(crlfCount == 0 || lfCount == 0))
+            if ((!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) && !options.Contains("don't fix line endings"))
             {
-                if (crlfCount < lfCount) // CRLF to LF
+            	if ((crlfCount < lfCount || options.Contains("use lf")) && !options.Contains("use crlf")) // CRLF to LF
                     summary += "* Converted CRLF to LF\n";
                 else
                     summary += "* Converted LF to CRLF\n";
             }
-            if (!(tabCount == 0 || spaceCount == 0))
+            if (!(tabCount == 0 || spaceCount == 0) || options.Contains("use spaces") || options.Contains("use tabs"))
             {
-                if (tabCount < spaceCount) // Tabs to spaces
+            	if ((tabCount < spaceCount || options.Contains("use spaces")) && !options.Contains("use tabs")) // Tabs to spaces
                     summary += "* Converted tabs to spaces (4 spaces to a tab)\n";
                 else // Spaces to tabs
                     summary += "* Converted spaces to tabs\n";
             }
-            if (trailing) 
+            if (trailing && !options.Contains("don't fix whitespaces"))
                 summary += "* Fixed trailing whitespaces\n";
             return summary;
         }
