@@ -73,6 +73,7 @@ namespace shitfixer
                         string repository = issue.Title.Substring(4).Trim();
                         string user = repository.Remove(repository.IndexOf('/'));
                         string repo = repository.Substring(repository.IndexOf('/') + 1);
+                        string args = GitHub.GetIssueBody(issue.IssueNumber, "FixYourShit/shitfixer");
                         var existingRepos = GitHub.GetRepositories();
                         foreach (var item in existingRepos)
                         {
@@ -107,6 +108,7 @@ namespace shitfixer
                             {
                                 GitHub.CommentOnIssue(issue.IssueNumber, "FixYourShit/shitfixer", "Working on it.");
                                 GitHub.CloseIssue(issue.IssueNumber, "FixYourShit/shitfixer");
+                                ShitFixer.args = args;
                                 ShitFixer.FixShit(repository);
                             }
                         }

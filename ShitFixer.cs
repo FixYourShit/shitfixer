@@ -17,6 +17,7 @@ namespace shitfixer
     {
         private const string CloneUrl = "git://github.com/{0}.git";
         public static bool Busy = false;
+        public static string args = "";
 
         private static string[] ValidExtensions = new []
             {
@@ -241,6 +242,8 @@ namespace shitfixer
             foreach (var ext in ValidExtensions)
                 files.AddRange(Directory.GetFiles(cloneDir, ext, SearchOption.AllDirectories));
             files = new List<string>(files.Where(f => !f.Contains(".git")));
+            args = args.ToLower();
+            string[] options = args.Split('\n');
             int tabCount = 0, spaceCount = 0;
             int crlfCount = 0, lfCount = 0;
             string contents;
@@ -251,9 +254,12 @@ namespace shitfixer
                 try
                 {
                     contents = File.ReadAllText(file);
-                    lfCount += contents.Count(c => c == '\n');
-                    crlfCount += contents.Count(c => c == '\r');
-                    lfCount -= crlfCount;
+                    if (!options.Contains("don't fix line endings"))
+                    {
+                        lfCount += contents.Count(c => c == '\n');
+                        crlfCount += contents.Count(c => c == '\r');
+                        lfCount -= crlfCount;
+                    }
                     foreach (var line in contents.Split('\n'))
                     {
                         if (line.StartsWith("\t"))
@@ -282,9 +288,9 @@ namespace shitfixer
                 Encoding encoding = reader.CurrentEncoding;
                 text = reader.ReadToEnd();
                 reader.Close();
-                if (!(crlfCount == 0 || lfCount == 0)) // Fix line breaks
+                if (!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) // Fix line breaks
                 {
-                    if (crlfCount < lfCount) // CRLF to LF
+                	if (crlfCount < lfCount || options.Contains("use lf")) // CRLF to LF
                         text = text.Replace("\r\n", "\n");
                     else // LF to CRLF
                     {
@@ -292,14 +298,14 @@ namespace shitfixer
                             .Replace("\n", "\r\n").Replace("temporary_shit_to_fix", "\r\n");
                     }
                 }
-                if (!(tabCount == 0 || spaceCount == 0)) // Fix indentation
+                if (!(tabCount == 0 || spaceCount == 0) || options.Contains("use spaces") || options.Contains("use tabs")) // Fix indentation
                 {
-                    if (tabCount < spaceCount) // Tabs to spaces
+                	if (tabCount < spaceCount || options.Contains("use spaces")) // Tabs to spaces
                         text = text.Replace("\t", spacesString);
                     else // Spaces to tabs
                         text = SpacesToTabs(text, lfCount < crlfCount);
                 }
-                if (trailing) //Fix trailing whitespaces
+                if (trailing && !options.Contains("don't fix whitespaces")) //Fix trailing whitespaces
                     text = FixTrailingWhiteSpace(text);
                 var writer = File.Create(file);
                 var payload = encoding.GetBytes(text);

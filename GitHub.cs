@@ -17,6 +17,7 @@ namespace shitfixer
         private const string ListRepositoriesUrl = "https://api.github.com/user/repos?sort=created";
         private const string PullRequestUrl = "https://api.github.com/repos/{0}/pulls";
         private const string ListIssuesUrl = "https://api.github.com/repos/{0}/issues";
+        private const string IssueDetails = "https://api.github.com/repos/{0}/issues/{1}";
         private const string IssueCommentUrl = "https://api.github.com/repos/{0}/issues/{1}/comments";
         private const string EditIssueUrl = "https://api.github.com/repos/{0}/issues/{1}";
         private const string GetPullRequestUrl = "https://api.github.com/repos/{0}/pulls/{1}";
@@ -118,6 +119,15 @@ namespace shitfixer
             }
 
             return result;
+        }
+        
+        public static string GetIssueBody(int issueNumber, string repository)
+        {
+        	var request = CreateGet(string.Format(IssueDetails, repository, issueNumber));
+        	var response = request.GetResponse();
+        	var json = GetJson(response.GetResponseStream());
+        	response.Close();
+        	return json["body"].Value<string>();
         }
 
         public static void CommentOnIssue(int issueNumber, string repository, string comment)
