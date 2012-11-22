@@ -288,15 +288,18 @@ namespace shitfixer
                 Encoding encoding = reader.CurrentEncoding;
                 text = reader.ReadToEnd();
                 reader.Close();
-                if (!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) // Fix line breaks
+                if (!options.Contains("don't fix line endings"))
                 {
-                	if ((crlfCount < lfCount || options.Contains("use lf")) && !options.Contains("use crlf")) // CRLF to LF
-                        text = text.Replace("\r\n", "\n");
-                    else // LF to CRLF
-                    {
-                        text = text.Replace("\r\n", "temporary_shit_to_fix")
-                            .Replace("\n", "\r\n").Replace("temporary_shit_to_fix", "\r\n");
-                    }
+                	if (!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) // Fix line breaks
+                	{
+                		if ((crlfCount < lfCount || options.Contains("use lf")) && !options.Contains("use crlf")) // CRLF to LF
+                			text = text.Replace("\r\n", "\n");
+                		else // LF to CRLF
+                		{
+                			text = text.Replace("\r\n", "temporary_shit_to_fix")
+                				.Replace("\n", "\r\n").Replace("temporary_shit_to_fix", "\r\n");
+                		}
+                	}
                 }
                 if (!(tabCount == 0 || spaceCount == 0) || options.Contains("use spaces") || options.Contains("use tabs")) // Fix indentation
                 {
@@ -316,7 +319,7 @@ namespace shitfixer
 
             // Create summary
             string summary = "";
-            if (!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf"))
+            if ((!(crlfCount == 0 || lfCount == 0) || options.Contains("use lf") || options.Contains("use crlf")) && !options.Contains("don't fix line endings"))
             {
             	if ((crlfCount < lfCount || options.Contains("use lf")) && !options.Contains("use crlf")) // CRLF to LF
                     summary += "* Converted CRLF to LF\n";
